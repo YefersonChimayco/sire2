@@ -1,0 +1,8 @@
+RewriteEngine On
+Options All -Indexes
+
+# 1️ Regla ESPECÍFICA primero: conserva la query-string
+RewriteRule ^reset-password$ src/view/reset-password.php [L,QSA]
+
+# 2️ Regla GENÉRICA después
+RewriteRule ^([a-zA-Z0-9/ñÑ-]+)$ index.php?views=$1 [L,QSA]
