@@ -121,7 +121,7 @@ function generarfilastabla(item) {
         <td><strong>${item.dni}</strong></td>
         <td>${item.apellido_paterno} ${item.apellido_materno}, ${item.nombres}</td>
         <td>Semestre ${item.semestre}</td>
-        <td>Programa ${item.programa_id}</td>
+    <td>${item.programa_nombre || 'No asignado'}</td>
         <td>${estado_badge}</td>
         <td>${fecha_matricula}</td>
         <td>${item.options}</td>

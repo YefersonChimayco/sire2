@@ -36,6 +36,7 @@ if ($tipo == "listar_estudiantes_ordenados_tabla") {
                 $arr_contenido[$i]->estado = $arr_Estudiantes[$i]->estado;
                 $arr_contenido[$i]->semestre = $arr_Estudiantes[$i]->semestre;
                 $arr_contenido[$i]->programa_id = $arr_Estudiantes[$i]->programa_id;
+                $arr_contenido[$i]->programa_nombre = $arr_Estudiantes[$i]->programa_nombre ?? 'No asignado';
                 $arr_contenido[$i]->fecha_matricula = $arr_Estudiantes[$i]->fecha_matricula;
                 
                 $opciones = '<button type="button" title="Editar" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target=".modal_editar' . $arr_Estudiantes[$i]->dni . '"><i class="fa fa-edit"></i></button>

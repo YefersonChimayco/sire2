@@ -43,17 +43,23 @@ class EstudianteModel {
     public function buscarEstudiantesOrderByApellidosNombres_tabla_filtro($busqueda_tabla_dni, $busqueda_tabla_nombres, $busqueda_tabla_estado) {
         $condicion = "1=1";
         if (!empty($busqueda_tabla_dni)) {
-            $condicion .= " AND dni LIKE '$busqueda_tabla_dni%'";
+            $condicion .= " AND e.dni LIKE '$busqueda_tabla_dni%'";
         }
         if (!empty($busqueda_tabla_nombres)) {
-            $condicion .= " AND (nombres LIKE '%$busqueda_tabla_nombres%' OR apellido_paterno LIKE '%$busqueda_tabla_nombres%' OR apellido_materno LIKE '%$busqueda_tabla_nombres%')";
+            $condicion .= " AND (e.nombres LIKE '%$busqueda_tabla_nombres%' OR e.apellido_paterno LIKE '%$busqueda_tabla_nombres%' OR e.apellido_materno LIKE '%$busqueda_tabla_nombres%')";
         }
         if (!empty($busqueda_tabla_estado)) {
-            $condicion .= " AND estado = '$busqueda_tabla_estado'";
+            $condicion .= " AND e.estado = '$busqueda_tabla_estado'";
         }
 
         $arrRespuesta = array();
-        $respuesta = $this->conexion->query("SELECT * FROM estudiantes WHERE $condicion ORDER BY apellido_paterno, apellido_materno, nombres");
+        $respuesta = $this->conexion->query("
+            SELECT e.*, p.nombre as programa_nombre 
+            FROM estudiantes e 
+            LEFT JOIN programas_estudio p ON e.programa_id = p.id 
+            WHERE $condicion 
+            ORDER BY e.apellido_paterno, e.apellido_materno, e.nombres
+        ");
         while ($objeto = $respuesta->fetch_object()) {
             array_push($arrRespuesta, $objeto);
         }
@@ -63,18 +69,25 @@ class EstudianteModel {
     public function buscarEstudiantesOrderByApellidosNombres_tabla($pagina, $cantidad_mostrar, $busqueda_tabla_dni, $busqueda_tabla_nombres, $busqueda_tabla_estado) {
         $condicion = "1=1";
         if (!empty($busqueda_tabla_dni)) {
-            $condicion .= " AND dni LIKE '$busqueda_tabla_dni%'";
+            $condicion .= " AND e.dni LIKE '$busqueda_tabla_dni%'";
         }
         if (!empty($busqueda_tabla_nombres)) {
-            $condicion .= " AND (nombres LIKE '%$busqueda_tabla_nombres%' OR apellido_paterno LIKE '%$busqueda_tabla_nombres%' OR apellido_materno LIKE '%$busqueda_tabla_nombres%')";
+            $condicion .= " AND (e.nombres LIKE '%$busqueda_tabla_nombres%' OR e.apellido_paterno LIKE '%$busqueda_tabla_nombres%' OR e.apellido_materno LIKE '%$busqueda_tabla_nombres%')";
         }
         if (!empty($busqueda_tabla_estado)) {
-            $condicion .= " AND estado = '$busqueda_tabla_estado'";
+            $condicion .= " AND e.estado = '$busqueda_tabla_estado'";
         }
 
         $iniciar = ($pagina - 1) * $cantidad_mostrar;
         $arrRespuesta = array();
-        $respuesta = $this->conexion->query("SELECT * FROM estudiantes WHERE $condicion ORDER BY apellido_paterno, apellido_materno, nombres LIMIT $iniciar, $cantidad_mostrar");
+        $respuesta = $this->conexion->query("
+            SELECT e.*, p.nombre as programa_nombre 
+            FROM estudiantes e 
+            LEFT JOIN programas_estudio p ON e.programa_id = p.id 
+            WHERE $condicion 
+            ORDER BY e.apellido_paterno, e.apellido_materno, e.nombres 
+            LIMIT $iniciar, $cantidad_mostrar
+        ");
         while ($objeto = $respuesta->fetch_object()) {
             array_push($arrRespuesta, $objeto);
         }

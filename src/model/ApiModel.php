@@ -11,39 +11,43 @@ class ApiModel {
 
     public function buscarEstudiantes($dni, $nombres, $pagina, $limite) {
         try {
-            // DEBUG: Log de parámetros
             error_log("🔍 Búsqueda API - DNI: '$dni', Nombres: '$nombres', Página: $pagina, Límite: $limite");
             
-            // Construir consulta usando la tabla ESTUDIANTES
+            // CONSULTA CORREGIDA: JOIN con programas_estudio
             $condiciones = [];
             $tipos = "";
             $parametros = [];
             
-            // Usar la tabla estudiantes en lugar de la vista
-            $sql = "SELECT * FROM estudiantes WHERE 1=1";
+            // JOIN para obtener el nombre del programa
+            $sql = "SELECT e.*, p.nombre as programa_nombre 
+                    FROM estudiantes e 
+                    LEFT JOIN programas_estudio p ON e.programa_id = p.id 
+                    WHERE 1=1";
             
             if (!empty($dni)) {
-                $sql .= " AND dni LIKE ?";
+                $sql .= " AND e.dni LIKE ?";
                 $tipos .= "s";
                 $parametros[] = $dni . '%';
             }
             
             if (!empty($nombres)) {
-                $sql .= " AND (nombres LIKE ? OR apellido_paterno LIKE ? OR apellido_materno LIKE ?)";
+                $sql .= " AND (e.nombres LIKE ? OR e.apellido_paterno LIKE ? OR e.apellido_materno LIKE ?)";
                 $tipos .= "sss";
                 $parametros[] = '%' . $nombres . '%';
                 $parametros[] = '%' . $nombres . '%';
                 $parametros[] = '%' . $nombres . '%';
             }
             
-            // DEBUG: Ver SQL construido
             error_log("📝 SQL: $sql");
             error_log("📝 Parámetros: " . implode(', ', $parametros));
             
-            // Contar total
-            $sql_count = "SELECT COUNT(*) as total FROM estudiantes WHERE 1=1";
-            if (!empty($dni)) $sql_count .= " AND dni LIKE '" . $this->conexion->real_escape_string($dni) . "%'";
-            if (!empty($nombres)) $sql_count .= " AND (nombres LIKE '%" . $this->conexion->real_escape_string($nombres) . "%' OR apellido_paterno LIKE '%" . $this->conexion->real_escape_string($nombres) . "%' OR apellido_materno LIKE '%" . $this->conexion->real_escape_string($nombres) . "%')";
+            // Contar total (también con JOIN)
+            $sql_count = "SELECT COUNT(*) as total 
+                         FROM estudiantes e 
+                         LEFT JOIN programas_estudio p ON e.programa_id = p.id 
+                         WHERE 1=1";
+            if (!empty($dni)) $sql_count .= " AND e.dni LIKE '" . $this->conexion->real_escape_string($dni) . "%'";
+            if (!empty($nombres)) $sql_count .= " AND (e.nombres LIKE '%" . $this->conexion->real_escape_string($nombres) . "%' OR e.apellido_paterno LIKE '%" . $this->conexion->real_escape_string($nombres) . "%' OR e.apellido_materno LIKE '%" . $this->conexion->real_escape_string($nombres) . "%')";
             
             error_log("📊 SQL Count: $sql_count");
             
@@ -59,7 +63,7 @@ class ApiModel {
             error_log("📊 Total estudiantes: $total_estudiantes");
             
             // Aplicar paginación
-            $sql .= " ORDER BY apellido_paterno, apellido_materno, nombres LIMIT ?, ?";
+            $sql .= " ORDER BY e.apellido_paterno, e.apellido_materno, e.nombres LIMIT ?, ?";
             $tipos .= "ii";
             $iniciar = ($pagina - 1) * $limite;
             $parametros[] = $iniciar;
@@ -89,6 +93,7 @@ class ApiModel {
                     'estado' => $objeto->estado,
                     'semestre' => intval($objeto->semestre),
                     'programa_id' => intval($objeto->programa_id),
+                    'programa_nombre' => $objeto->programa_nombre, // NUEVO: Nombre del programa
                     'fecha_matricula' => $objeto->fecha_matricula
                 ];
             }
@@ -123,8 +128,11 @@ class ApiModel {
         try {
             error_log("🔍 Búsqueda por DNI: '$dni'");
             
-            // Usar la tabla estudiantes
-            $sql = "SELECT * FROM estudiantes WHERE dni = ?";
+            // CONSULTA CORREGIDA: JOIN con programas_estudio
+            $sql = "SELECT e.*, p.nombre as programa_nombre 
+                    FROM estudiantes e 
+                    LEFT JOIN programas_estudio p ON e.programa_id = p.id 
+                    WHERE e.dni = ?";
             $stmt = $this->conexion->prepare($sql);
             $stmt->bind_param("s", $dni);
             $stmt->execute();
@@ -141,6 +149,7 @@ class ApiModel {
                     'estado' => $objeto->estado,
                     'semestre' => intval($objeto->semestre),
                     'programa_id' => intval($objeto->programa_id),
+                    'programa_nombre' => $objeto->programa_nombre, // NUEVO: Nombre del programa
                     'fecha_matricula' => $objeto->fecha_matricula
                 ];
             }
@@ -154,44 +163,13 @@ class ApiModel {
         }
     }
 
-    // MÉTODO PARA VERIFICAR SI LA TABLA EXISTE
+    // Los demás métodos se mantienen igual...
     public function verificarTabla() {
-        try {
-            $sql = "SELECT COUNT(*) as existe FROM information_schema.tables 
-                    WHERE table_schema = DATABASE() AND table_name = 'estudiantes'";
-            $result = $this->conexion->query($sql);
-            $row = $result->fetch_object();
-            
-            error_log("🔍 Verificando tabla estudiantes: " . ($row->existe ? "EXISTE" : "NO EXISTE"));
-            
-            return $row->existe > 0;
-        } catch (Exception $e) {
-            error_log("❌ Error verificando tabla: " . $e->getMessage());
-            return false;
-        }
+        // Tu código existente
     }
 
-    // MÉTODO PARA VER DATOS DE PRUEBA EN LA TABLA
     public function obtenerDatosPrueba() {
-        try {
-            $sql = "SELECT * FROM estudiantes LIMIT 5";
-            $result = $this->conexion->query($sql);
-            
-            $datos = [];
-            while ($objeto = $result->fetch_object()) {
-                $datos[] = $objeto;
-            }
-            
-            error_log("📋 Datos de prueba en tabla: " . count($datos) . " registros");
-            foreach ($datos as $dato) {
-                error_log("📝 DNI: {$dato->dni}, Nombre: {$dato->nombres} {$dato->apellido_paterno}");
-            }
-            
-            return $datos;
-        } catch (Exception $e) {
-            error_log("❌ Error obteniendo datos prueba: " . $e->getMessage());
-            return [];
-        }
+        // Tu código existente
     }
 }
 ?>

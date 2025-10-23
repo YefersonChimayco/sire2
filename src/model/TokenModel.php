@@ -176,5 +176,26 @@ class TokenModel {
             return null;
         }
     }
+    // En TokenModel.php - agregar este método
+public function validarTokenAPI($token) {
+    try {
+        $stmt = $this->conexion->prepare("
+            SELECT t.*, c.ruc, c.razon_social, c.telefono, c.correo 
+            FROM tokens t 
+            JOIN client_api c ON t.id_client_api = c.id 
+            WHERE t.token = ? 
+            AND t.estado = 1 
+            AND c.estado = 1
+        ");
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_object();
+    } catch (Exception $e) {
+        error_log("Error en validarTokenAPI: " . $e->getMessage());
+        return null;
+    }
+}
 }
 ?>

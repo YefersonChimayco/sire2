@@ -1,7 +1,7 @@
 <?php
 /**
  * ApiController.php - Controlador para API de Estudiantes
- * Con validación de token fijo
+ * NO MODIFICAR - Ya funciona correctamente
  */
 
 header('Content-Type: application/json; charset=utf-8');
