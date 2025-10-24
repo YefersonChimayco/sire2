@@ -130,8 +130,8 @@
                        <div class="col-md-3 col-sm-6 mb-3">
                         <a href="<?php echo BASE_URL ?>token" class="quick-access-link">
                             <div class="quick-access-item text-center p-3">
-                                <i class="fas fa-calendar-alt fa-2x mb-2"></i>
-                                <h6>Periodos Académicos</h6>
+                                <i class="fas fa-qrcode fa-2x"></i> 
+                                <h6>Token de cliente</h6>
                                 <small class="text-muted">Gestionar tokens</small>
                             </div>
                         </a>
@@ -139,8 +139,8 @@
                        <div class="col-md-3 col-sm-6 mb-3">
                         <a href="<?php echo BASE_URL ?>clientes" class="quick-access-link">
                             <div class="quick-access-item text-center p-3">
-                                <i class="fas fa-calendar-alt fa-2x mb-2"></i>
-                                <h6>Periodos Académicos</h6>
+                                <i class="fas fa-headset fa-2x"></i>    
+                                <h6>clientes</h6>
                                 <small class="text-muted">Gestionar Clientes</small>
                             </div>
                         </a>
@@ -148,7 +148,7 @@
                        <div class="col-md-3 col-sm-6 mb-3">
                         <a href="<?php echo BASE_URL ?>apiestudiante" class="quick-access-link">
                             <div class="quick-access-item text-center p-3">
-                                <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                             <i class="fas fa-cloud fa-2x"></i>    
                                 <h6>Periodos Académicos</h6>
                                 <small class="text-muted">api</small>
                             </div>

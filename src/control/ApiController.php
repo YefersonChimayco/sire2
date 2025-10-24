@@ -13,29 +13,16 @@ try {
     $tipo = $_GET['tipo'] ?? '';
     
     // Token fijo - se valida automáticamente
-    $api_token = '3830e33370edc261-1';
+    $api_token = 'd6ba9ab2704f1380-2';
     
     // Instanciar modelo
     $objApi = new ApiModel();
     
     // DEBUG: Verificar tabla y datos
-    if ($tipo === 'debug') {
-        $tablaExiste = $objApi->verificarTabla();
-        $datosPrueba = $objApi->obtenerDatosPrueba();
-        
-        echo json_encode([
-            'status' => true,
-            'debug' => [
-                'tabla_existe' => $tablaExiste,
-                'datos_prueba' => $datosPrueba,
-                'total_datos' => count($datosPrueba)
-            ]
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+  
     
     // Validar token fijo
-    if ($api_token !== '3830e33370edc261-1') {
+    if ($api_token !== 'd6ba9ab2704f1380-2') {
         throw new Exception('Token de API inválido', 401);
     }
     
