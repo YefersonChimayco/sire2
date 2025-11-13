@@ -10,6 +10,29 @@ class TokenController {
     public function __construct() {
         $this->objSesion = new SessionModel();
         $this->objToken = new TokenModel();
+        
+        // ========== CONFIGURACIÓN CORS COMPLETA ==========
+        $this->configurarCORS();
+    }
+    
+    // ========== NUEVO MÉTODO: CONFIGURAR CORS ==========
+    private function configurarCORS() {
+        // Permitir acceso desde cualquier origen (en producción puedes restringir a tu dominio)
+        header("Access-Control-Allow-Origin: *");
+        // Permitir los métodos HTTP necesarios
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+        // Permitir los headers personalizados
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin");
+        // Permitir credenciales (si es necesario)
+        header("Access-Control-Allow-Credentials: true");
+        // Cache preflight por 1 hora
+        header("Access-Control-Max-Age: 3600");
+        
+        // Manejar preflight OPTIONS request
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            http_response_code(200);
+            exit();
+        }
     }
     
     private function validateSession($id_sesion, $token_sesion) {
@@ -21,13 +44,21 @@ class TokenController {
     }
     
     private function jsonResponse($data) {
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        // Limpiar buffer de salida
+        while (ob_get_level()) ob_end_clean();
+        
+        // Headers para JSON
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         exit;
     }
     
     public function handleRequest($tipo) {
-        // ========== NUEVO ENDPOINT PÚBLICO - NO REQUIERE SESIÓN ==========
+        // ========== ENDPOINT PÚBLICO - NO REQUIERE SESIÓN ==========
         if ($tipo === "validar_token_api") {
             $this->validarTokenAPI();
             return;
@@ -62,11 +93,20 @@ class TokenController {
         }
     }
     
-    // ========== NUEVO MÉTODO: VALIDACIÓN DE TOKENS PARA API ==========
+    // ========== MÉTODO VALIDAR TOKEN API ==========
     private function validarTokenAPI() {
         try {
-            // Obtener token de POST o GET
+            // Obtener token de POST, GET o raw input
             $token = $_POST['token'] ?? $_GET['token'] ?? '';
+            
+            // Si no viene por POST/GET, intentar leer raw input
+            if (empty($token)) {
+                $input = file_get_contents('php://input');
+                if (!empty($input)) {
+                    $data = json_decode($input, true);
+                    $token = $data['token'] ?? '';
+                }
+            }
             
             if (empty($token)) {
                 $this->jsonResponse([
@@ -77,10 +117,15 @@ class TokenController {
                 ]);
             }
             
+            // Log para debugging
+            error_log("🔐 Validando token: " . substr($token, 0, 10) . "...");
+            
             // Usar método existente en TokenModel
             $tokenData = $this->objToken->validarTokenAPI($token);
             
             if ($tokenData) {
+                error_log("✅ Token válido para cliente: " . $tokenData->razon_social);
+                
                 $this->jsonResponse([
                     'status' => true,
                     'mensaje' => 'Token válido',
@@ -89,7 +134,8 @@ class TokenController {
                         'id' => $tokenData->id_client_api,
                         'razon_social' => $tokenData->razon_social,
                         'ruc' => $tokenData->ruc ?? '',
-                        'correo' => $tokenData->correo ?? ''
+                        'correo' => $tokenData->correo ?? '',
+                        'telefono' => $tokenData->telefono ?? ''
                     ],
                     'token_info' => [
                         'id' => $tokenData->id,
@@ -99,6 +145,8 @@ class TokenController {
                     'codigo' => 200
                 ]);
             } else {
+                error_log("❌ Token inválido: " . substr($token, 0, 10) . "...");
+                
                 $this->jsonResponse([
                     'status' => false,
                     'error' => 'Token inválido, expirado o cliente inactivo',
@@ -108,17 +156,17 @@ class TokenController {
             }
             
         } catch (Exception $e) {
-            error_log("Error en validarTokenAPI: " . $e->getMessage());
+            error_log("💥 Error en validarTokenAPI: " . $e->getMessage());
             $this->jsonResponse([
                 'status' => false,
-                'error' => 'Error interno del servidor',
+                'error' => 'Error interno del servidor: ' . $e->getMessage(),
                 'valido' => false,
                 'codigo' => 500
             ]);
         }
     }
     
-    // ========== MÉTODOS EXISTENTES (SE MANTIENEN IGUAL) ==========
+    // ========== MÉTODOS EXISTENTES (SIN CAMBIOS) ==========
     private function getClientes() {
         try {
             $clientes = $this->objToken->getClientes();
