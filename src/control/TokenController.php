@@ -27,10 +27,16 @@ class TokenController {
     }
     
     public function handleRequest($tipo) {
+        // ========== NUEVO ENDPOINT PÚBLICO - NO REQUIERE SESIÓN ==========
+        if ($tipo === "validar_token_api") {
+            $this->validarTokenAPI();
+            return;
+        }
+        
         $id_sesion = $_POST['sesion'] ?? '';
         $token_sesion = $_POST['token'] ?? '';
         
-        // Validar sesión para todos los endpoints
+        // Validar sesión para endpoints protegidos
         if (!$this->validateSession($id_sesion, $token_sesion)) {
             $this->jsonResponse(['status' => false, 'msg' => 'Error_Sesion']);
         }
@@ -56,11 +62,67 @@ class TokenController {
         }
     }
     
+    // ========== NUEVO MÉTODO: VALIDACIÓN DE TOKENS PARA API ==========
+    private function validarTokenAPI() {
+        try {
+            // Obtener token de POST o GET
+            $token = $_POST['token'] ?? $_GET['token'] ?? '';
+            
+            if (empty($token)) {
+                $this->jsonResponse([
+                    'status' => false,
+                    'error' => 'Token no proporcionado',
+                    'codigo' => 400,
+                    'valido' => false
+                ]);
+            }
+            
+            // Usar método existente en TokenModel
+            $tokenData = $this->objToken->validarTokenAPI($token);
+            
+            if ($tokenData) {
+                $this->jsonResponse([
+                    'status' => true,
+                    'mensaje' => 'Token válido',
+                    'valido' => true,
+                    'cliente' => [
+                        'id' => $tokenData->id_client_api,
+                        'razon_social' => $tokenData->razon_social,
+                        'ruc' => $tokenData->ruc ?? '',
+                        'correo' => $tokenData->correo ?? ''
+                    ],
+                    'token_info' => [
+                        'id' => $tokenData->id,
+                        'fecha_reg' => $tokenData->fecha_reg,
+                        'estado' => $tokenData->estado
+                    ],
+                    'codigo' => 200
+                ]);
+            } else {
+                $this->jsonResponse([
+                    'status' => false,
+                    'error' => 'Token inválido, expirado o cliente inactivo',
+                    'valido' => false,
+                    'codigo' => 401
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error en validarTokenAPI: " . $e->getMessage());
+            $this->jsonResponse([
+                'status' => false,
+                'error' => 'Error interno del servidor',
+                'valido' => false,
+                'codigo' => 500
+            ]);
+        }
+    }
+    
+    // ========== MÉTODOS EXISTENTES (SE MANTIENEN IGUAL) ==========
     private function getClientes() {
         try {
             $clientes = $this->objToken->getClientes();
             
-            // Formatear para el frontend
             $clientesFormateados = [];
             foreach ($clientes as $id => $razon_social) {
                 $clientesFormateados[] = [
@@ -111,7 +173,7 @@ class TokenController {
                     $arr_contenido[$i] = (object) [
                         'id' => $token->id,
                         'id_client_api' => $token->id_client_api,
-                        'token' => $token->token, // MOSTRAR TOKEN COMPLETO
+                        'token' => $token->token,
                         'fecha_reg' => $token->fecha_reg,
                         'estado' => $token->estado,
                         'razon_social' => $this->sanitizeInput($token->razon_social ?? 'No asignado'),
@@ -154,7 +216,6 @@ class TokenController {
                 $this->jsonResponse(['status' => false, 'mensaje' => 'Cliente API no válido']);
             }
             
-            // Validar formato de fecha
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_reg)) {
                 $fecha_reg = date('Y-m-d');
             }
@@ -193,7 +254,6 @@ class TokenController {
                 $this->jsonResponse(['status' => false, 'mensaje' => 'Cliente API no válido']);
             }
             
-            // Validar formato de fecha
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_reg)) {
                 $this->jsonResponse(['status' => false, 'mensaje' => 'Formato de fecha no válido']);
             }
@@ -226,7 +286,6 @@ class TokenController {
                 $this->jsonResponse(['status' => false, 'mensaje' => 'ID no válido']);
             }
             
-            // Verificar si el token existe antes de eliminar
             $token = $this->objToken->buscarTokenById($id);
             if (!$token) {
                 $this->jsonResponse(['status' => false, 'mensaje' => 'Token no encontrado']);
