@@ -1,10 +1,20 @@
 <?php
 /**
  * ApiController.php - Controlador para API de Estudiantes
- * NO MODIFICAR - Ya funciona correctamente
+ * CON CORS HABILITADO
  */
 
+// ========== HEADERS CORS AGREGADOS ==========
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header('Content-Type: application/json; charset=utf-8');
+
+// ========== MANEJAR PREFLIGHT OPTIONS ==========
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // Cargar modelos
 require_once('../model/ApiModel.php');
